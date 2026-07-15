@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Utility Functions - Mocha Tests</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mocha@10/mocha.css">
+</head>
+<body>
+  <h1>Utility Functions Test Suite</h1>
+  <div id="mocha"></div>
+
+  <!-- Mocha + Chai from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/mocha@10/mocha.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chai@4/chai.js"></script>
+  <script src="./utils.js"></script>
+
+  <!-- Utility functions (inlined from utils.js for file:// compatibility)
+  <script>
+    // --- utils.js (inlined) ---
+    const Utils = (() => {
+      function add(a, b) {
+        return a + b;
+      }
+
+      function subtract(a, b) {
+        return a - b;
+      }
+
+      function capitalize(str) {
+        if (typeof str !== 'string' || str.length === 0) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+
+      function isEven(n) {
+        return n % 2 === 0;
+      }
+
+      function reverseString(str) {
+        return str.split('').reverse().join('');
+      }
+
+      return { add, subtract, capitalize, isEven, reverseString };
+    })();
+  </script> -->
+
+  <!-- Mocha setup & tests -->
+  <script>
+    mocha.setup('bdd');
+    mocha.checkLeaks();
+    const { expect } = chai;
+    const { add, subtract, capitalize, isEven, reverseString } = Utils;
+
+    describe('add()', function () {
+      it('should return the sum of two numbers', function () {
+        expect(add(2, 3)).to.equal(5);
+      });
+      it('should handle negative numbers', function () {
+        expect(add(-1, -4)).to.equal(-5);
+      });
+    });
+
+    describe('Utils.add()', function () {
+      it('should return the sum of two numbers', function () {
+        expect(Utils.add(2, 3)).to.equal(5);
+      });
+      it('should handle negative numbers', function () {
+        expect(Utils.add(-1, -4)).to.equal(-5);
+      });
+    });
+
+    describe('subtract()', function () {
+      it('should return the difference of two numbers', function () {
+        expect(subtract(10, 4)).to.equal(6);
+      });
+      it('should handle negative results', function () {
+        expect(subtract(3, 7)).to.equal(-4);
+      });
+    });
+
+    describe('capitalize()', function () {
+      it('should capitalize the first letter', function () {
+        expect(capitalize('hello')).to.equal('Hello');
+      });
+      it('should return empty string for empty input', function () {
+        expect(capitalize('')).to.equal('');
+      });
+      it('should handle single character', function () {
+        expect(capitalize('a')).to.equal('A');
+      });
+    });
+
+    describe('isEven()', function () {
+      it('should return true for even numbers', function () {
+        expect(isEven(4)).to.be.true;
+      });
+      it('should return false for odd numbers', function () {
+        expect(isEven(7)).to.be.false;
+      });
+      it('should return true for zero', function () {
+        expect(isEven(0)).to.be.true;
+      });
+    });
+
+    describe('reverseString()', function () {
+      it('should reverse a string', function () {
+        expect(reverseString('hello')).to.equal('olleh');
+      });
+      it('should handle palindromes', function () {
+        expect(reverseString('racecar')).to.equal('racecar');
+      });
+      it('should handle single character', function () {
+        expect(reverseString('x')).to.equal('x');
+      });
+    });
+
+    mocha.run();
+  </script>
+</body>
+</html>
