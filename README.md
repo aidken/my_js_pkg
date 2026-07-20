@@ -9,7 +9,11 @@ import/export, that requires a server.
 
 Tests gets run upon page load.
 
+## html Elements
+- [output](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/output)
+
 ## External Libraries
-Test suite: [Mocha](https://mochajs.org/)
-Assert statement:[Chai](https://www.chaijs.com/)
-CSV Parser: [Papa Parse](https://www.papaparse.com/)
+- Test suite: [Mocha](https://mochajs.org/)
+- Assert statement:[Chai](https://www.chaijs.com/)
+- CSV Parser: [Papa Parse](https://www.papaparse.com/)
+- General Parser: [Waxeye](https://waxeye-org.github.io/waxeye/)
