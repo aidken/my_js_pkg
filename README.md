@@ -12,3 +12,4 @@ Tests gets run upon page load.
 ## External Libraries
 Test suite: [Mocha](https://mochajs.org/)
 Assert statement:[Chai](https://www.chaijs.com/)
+CSV Parser: [Papa Parse](https://www.papaparse.com/)
