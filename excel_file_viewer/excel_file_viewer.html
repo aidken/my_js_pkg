@@ -1,0 +1,456 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Viewer - jspreadsheet CE</title>
+
+    <!-- jspreadsheet Community Edition -->
+    <script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
+    <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" />
+
+    <!-- jSuites (required dependency) -->
+    <script src="https://jsuites.net/v4/jsuites.js"></script>
+    <link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" />
+
+    <!-- SheetJS for parsing and exporting Excel files -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .upload-area {
+            max-width: 600px;
+            margin: 0 auto 24px;
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            background: #fff;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: #4a90d9;
+            background: #f0f7ff;
+        }
+
+        .upload-area svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            fill: #999;
+        }
+
+        .upload-area h2 {
+            font-size: 16px;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .file-info .filename {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            color: #555;
+            transition: background 0.15s, border-color 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: #f0f0f0;
+            border-color: #ccc;
+        }
+
+        .btn-export {
+            background: #4a90d9;
+            color: #fff;
+            border-color: #4a90d9;
+            font-weight: 500;
+        }
+
+        .btn-export:hover {
+            background: #3a7bc8;
+            border-color: #3a7bc8;
+        }
+
+        .btn-export svg,
+        .btn-clear svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 0;
+            padding: 0 8px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            background: #eee;
+            cursor: pointer;
+            font-size: 13px;
+            color: #555;
+            transition: background 0.15s;
+        }
+
+        .tab-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: #333;
+            font-weight: 600;
+            border-color: #ccc;
+        }
+
+        .spreadsheet-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 0 8px 8px 8px;
+            overflow: auto;
+            min-height: 200px;
+        }
+
+        #spreadsheet-wrapper {
+            display: none;
+        }
+
+        .jexcel_content {
+            font-size: 13px;
+        }
+
+        .edit-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+            text-align: right;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Excel Viewer</h1>
+        <p>Upload an Excel file (.xlsx, .xls) to view and edit its contents</p>
+    </div>
+
+    <div class="upload-area" id="uploadArea">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM6 20V4h7v5h5v11H6z"/>
+            <path d="M8 13h8v1H8zm0 3h8v1H8zm0-6h4v1H8z"/>
+        </svg>
+        <h2>Drop your Excel file here</h2>
+        <p>or click to browse (supports .xlsx, .xls, .csv)</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+    </div>
+
+    <div id="spreadsheet-wrapper">
+        <div class="toolbar">
+            <div class="file-info">
+                <span>File: <span class="filename" id="fileName"></span></span>
+            </div>
+            <div class="toolbar-actions">
+                <button class="btn btn-export" id="exportBtn">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                    </svg>
+                    Export to Excel
+                </button>
+                <button class="btn btn-clear" id="clearBtn">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                    Clear
+                </button>
+            </div>
+        </div>
+        <div class="tabs" id="tabs"></div>
+        <div class="spreadsheet-container">
+            <div id="spreadsheet"></div>
+        </div>
+        <div class="edit-hint">💡 Click any cell to edit. Changes will be included when you export.</div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const spreadsheetWrapper = document.getElementById('spreadsheet-wrapper');
+        const spreadsheetEl = document.getElementById('spreadsheet');
+        const tabsEl = document.getElementById('tabs');
+        const fileNameEl = document.getElementById('fileName');
+        const clearBtn = document.getElementById('clearBtn');
+        const exportBtn = document.getElementById('exportBtn');
+
+        let currentSpreadsheet = null;
+        let workbookData = {};
+        let sheetNames = [];
+        let activeSheet = '';
+        let originalFileName = 'spreadsheet';
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        // Clear button
+        clearBtn.addEventListener('click', () => {
+            destroySpreadsheet();
+            spreadsheetWrapper.style.display = 'none';
+            uploadArea.style.display = 'block';
+            fileInput.value = '';
+            workbookData = {};
+            sheetNames = [];
+            activeSheet = '';
+        });
+
+        // Export button
+        exportBtn.addEventListener('click', exportToExcel);
+
+        function processFile(file) {
+            // Store original filename without extension
+            originalFileName = file.name.replace(/\.[^/.]+$/, '');
+            fileNameEl.textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+
+                workbookData = {};
+                sheetNames = workbook.SheetNames;
+
+                sheetNames.forEach(name => {
+                    const sheet = workbook.Sheets[name];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                    workbookData[name] = jsonData;
+                });
+
+                // Build tabs
+                buildTabs(sheetNames);
+
+                // Show first sheet
+                if (sheetNames.length > 0) {
+                    showSheet(sheetNames[0]);
+                }
+
+                uploadArea.style.display = 'none';
+                spreadsheetWrapper.style.display = 'block';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function buildTabs(names) {
+            tabsEl.innerHTML = '';
+            names.forEach((name, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'tab-btn' + (index === 0 ? ' active' : '');
+                btn.textContent = name;
+                btn.addEventListener('click', () => {
+                    // Save current sheet data before switching
+                    saveCurrentSheetData();
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    showSheet(name);
+                });
+                tabsEl.appendChild(btn);
+            });
+        }
+
+        function saveCurrentSheetData() {
+            if (currentSpreadsheet && activeSheet) {
+                const data = currentSpreadsheet.getData();
+                workbookData[activeSheet] = data;
+            }
+        }
+
+        function showSheet(sheetName) {
+            destroySpreadsheet();
+            activeSheet = sheetName;
+
+            const data = workbookData[sheetName];
+            if (!data || data.length === 0) {
+                spreadsheetEl.innerHTML = '<p style="padding:20px;color:#888;">This sheet is empty.</p>';
+                return;
+            }
+
+            // Determine columns count (max row length)
+            const maxCols = Math.max(...data.map(row => row.length));
+
+            // Normalize rows to have same number of columns
+            const normalizedData = data.map(row => {
+                const newRow = [...row];
+                while (newRow.length < maxCols) newRow.push('');
+                return newRow;
+            });
+
+            // Create column config
+            const columns = [];
+            for (let i = 0; i < maxCols; i++) {
+                columns.push({ width: 120 });
+            }
+
+            currentSpreadsheet = jspreadsheet(spreadsheetEl, {
+                data: normalizedData,
+                columns: columns,
+                minDimensions: [maxCols, normalizedData.length],
+                tableOverflow: true,
+                tableWidth: '100%',
+                tableHeight: '500px',
+                editable: true,
+                allowInsertRow: true,
+                allowInsertColumn: true,
+                allowDeleteRow: true,
+                allowDeleteColumn: true,
+                columnSorting: true,
+                search: true,
+                contextMenu: true,
+                formulas: true,
+            });
+        }
+
+        function exportToExcel() {
+            // Save current sheet edits
+            saveCurrentSheetData();
+
+            // Create a new workbook
+            const wb = XLSX.utils.book_new();
+
+            // Add each sheet
+            sheetNames.forEach(name => {
+                const sheetData = workbookData[name] || [['']];
+                const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+                // if cell value is actually a formula, put it in the v property
+                for (const cellAddr in ws) {
+                    if (cellAddr[0] === '!') continue;
+
+                    const cell = ws[cellAddr];
+
+                    if (
+                        cell.t === 's' &&
+                        typeof cell.v === 'string' &&
+                        cell.v.startsWith('=')
+                    ) {
+                        cell.f = cell.v.substring(1);
+                        delete cell.v;
+                    }
+                }
+
+                XLSX.utils.book_append_sheet(wb, ws, name);
+            });
+
+            // Trigger download
+            XLSX.writeFile(wb, originalFileName + '_edited.xlsx');
+        }
+
+        function destroySpreadsheet() {
+            if (currentSpreadsheet) {
+                jspreadsheet.destroy(spreadsheetEl);
+                currentSpreadsheet = null;
+            }
+            spreadsheetEl.innerHTML = '';
+        }
+    </script>
+</body>
+</html>
