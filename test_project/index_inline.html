@@ -16,29 +16,63 @@
   <!-- Mocha + Chai from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/mocha@10/mocha.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chai@4/chai.js"></script>
+  <script type="module">
+  import { Temporal } from 'https://cdn.jsdelivr.net/npm/@js-temporal/polyfill/+esm';
+  </script>
+
   <!-- <script src="./utils.js"></script> -->
 
   <!-- Utility functions (inlined from utils.js for file:// compatibility) -->
   <script>
+    // @ts-check
+
     // --- utils.js (inlined) ---
     const Utils = (() => {
+
+      /**
+       * add two numbers.
+       * @param {number} a - a number.
+       * @param {number} b - another number
+       * @return {number} result, two numbers added.
+       */
       function add(a, b) {
         return a + b;
       }
 
+      /**
+       * subtract b from a.
+       * @param {number} a - a number.
+       * @param {number} b - number to subtract from a.
+       * @return {number} result.
+       */
       function subtract(a, b) {
         return a - b;
       }
 
+      /**
+       * capitalize.
+       * @param {string} str - a string.
+       * @return {string} capitalized word.
+       */
       function capitalize(str) {
         if (typeof str !== 'string' || str.length === 0) return '';
         return str.charAt(0).toUpperCase() + str.slice(1);
       }
 
+      /**
+       * determine if a given number is even.
+       * @param {number} n - a number.
+       * @return {boolean} true if n is an even number.
+       */
       function isEven(n) {
         return n % 2 === 0;
       }
 
+      /**
+       * returns a reversed version of given string.
+       * @param {string} str - input string.
+       * @return {string} str - reversed input.
+       */
       function reverseString(str) {
         return str.split('').reverse().join('');
       }
