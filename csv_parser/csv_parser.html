@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to JSON Converter</title>
+
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #999;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #fafafa;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #0078d4;
+            background: #eef6ff;
+        }
+
+        .drop-zone svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            fill: #999;
+        }
+
+        .controls {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background: #0078d4;
+            color: white;
+        }
+
+        button:hover {
+            background: #106ebe;
+        }
+
+        #fileName {
+            color: #666;
+            font-weight: bold;
+        }
+
+        #output {
+            margin-top: 20px;
+            padding: 16px;
+            border: 1px solid #ddd;
+            background: #f5f5f5;
+            min-height: 300px;
+            overflow: auto;
+            white-space: pre-wrap;
+        }
+
+        .error {
+            color: #d13438;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>CSV to JSON Converter</h1>
+
+    <div id="dropZone" class="drop-zone">
+        <h3>Drag & Drop CSV File Here</h3>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM6 20V4h7v5h5v11H6z" />
+            <path d="M8 13h8v1H8zm0 3h8v1H8zm0-6h4v1H8z" />
+        </svg>
+        <p>or use the Browse button below</p>
+    </div>
+
+    <div class="controls">
+        <input
+            type="file"
+            id="fileInput"
+            accept=".txt,.csv,text/csv"
+            hidden
+        >
+
+        <button id="browseBtn">
+            Browse CSV
+        </button>
+
+        <span id="fileName">
+            No file selected
+        </span>
+    </div>
+
+    <pre id="output"></pre>
+
+    <script>
+        // @ts-check
+
+        class CsvParser {
+            async parse(file) {
+                return new Promise((resolve, reject) => {
+                    Papa.parse(file, {
+                        header: true,
+                        skipEmptyLines: true,
+                        dynamicTyping: true,
+
+                        complete: (results) => {
+                            resolve(results.data);
+                        },
+
+                        error: (error) => {
+                            reject(error);
+                        }
+                    });
+                });
+            }
+        }
+
+        const csvParser = new CsvParser();
+
+        const dropZone = document.getElementById("dropZone");
+        const fileInput = document.getElementById("fileInput");
+        const browseBtn = document.getElementById("browseBtn");
+        const fileName = document.getElementById("fileName");
+        const output = document.getElementById("output");
+
+        let selectedFile = null;
+
+        function isValidCsvFile(file) {
+            if (!file) {
+                return false;
+            }
+
+            const validMimeTypes = [
+                "text/csv",
+                "application/vnd.ms-excel"
+            ];
+
+            const hasTxtCsvExtension =
+                file.name.toLowerCase().endsWith(".csv") || file.name.toLowerCase().endsWith(".txt");
+
+            return (
+                validMimeTypes.includes(file.type) ||
+                hasTxtCsvExtension
+            );
+        }
+
+        /**
+         * parse and then show json in the output area
+         * @param {file} file - the uploaded txt/csv file.
+         */
+        async function parseSelectedFile(file) {
+            try {
+                output.textContent = "Parsing CSV...";
+
+                const json = await csvParser.parse(file);
+
+                output.textContent = JSON.stringify(
+                    json,
+                    null,
+                    2
+                );
+
+                console.log("Generated JSON:", json);
+            } catch (error) {
+                output.textContent =
+                    `Error parsing CSV: ${error.message}`;
+                output.classList.add("error");
+            }
+        }
+
+        /**
+         * if a file has been posted, check if it is a valid csv file and
+         * if so prase it.
+         * @param {file} file - the uploaded txt/csv file.
+         */
+        async function handleSelectedFile(file) {
+            output.classList.remove("error");
+
+            if (!isValidCsvFile(file)) {
+                selectedFile = null;
+                fileName.textContent = "Invalid file";
+
+                output.textContent =
+                    "Please select a valid CSV (.csv or .txt) file.";
+
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+
+            await parseSelectedFile(file);
+        }
+
+        browseBtn.addEventListener("click", () => {
+            fileInput.click();
+        });
+
+        /**
+         * if fileInput changes, and it a file is posted,
+         * then call handleSelectedFile().
+         * handleSelectedFile() can be invoked not only by change on fileInput
+         * but also by drop on dropZone.
+         */
+        fileInput.addEventListener("change", async (event) => {
+            const file = event.target.files[0];
+
+            if (file) {
+                await handleSelectedFile(file);
+            }
+        });
+
+        ["dragenter", "dragover"].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                dropZone.classList.add("drag-over");
+            });
+        });
+
+        ["dragleave", "drop"].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                dropZone.classList.remove("drag-over");
+            });
+        });
+
+        /**
+         * if dropZone changes, and it a file is posted,
+         * then call handleSelectedFile().
+         * handleSelectedFile() can be invoked not only by drop on dropZone
+         * but also by change on fileInput.
+         */
+        dropZone.addEventListener("drop", async (e) => {
+            const files = e.dataTransfer.files;
+
+            if (files.length === 0) {
+                return;
+            }
+
+            await handleSelectedFile(files[0]);
+        });
+    </script>
+
+</body>
+</html>
