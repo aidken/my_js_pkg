@@ -16,15 +16,16 @@
   <!-- Mocha + Chai from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/mocha@10/mocha.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chai@4/chai.js"></script>
-  <script type="module">
-  import { Temporal } from 'https://cdn.jsdelivr.net/npm/@js-temporal/polyfill/+esm';
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@js-temporal/polyfill@0.4.4/dist/index.umd.js"></script>
 
   <!-- <script src="./utils.js"></script> -->
 
   <!-- Utility functions (inlined from utils.js for file:// compatibility) -->
   <script>
     // @ts-check
+
+    const { Temporal } = temporal;
+    const switchDebug = true;
 
     // --- utils.js (inlined) ---
     const Utils = (() => {
@@ -77,7 +78,75 @@
         return str.split('').reverse().join('');
       }
 
-      return { add, subtract, capitalize, isEven, reverseString };
+      /**
+       * Convert Excel serial date to a formatted date string (YYYY-MM-DD)
+       * @param {number} serial - Excel date serial number
+       * @param {boolean} [is1904=false] - Set true if using 1904 date system
+       * @returns {string} - Date string in YYYY-MM-DD format
+       */
+      function convertExcelSerialToTemporalPlainDate(serial, is1904 = false) {
+
+        if (switchDebug) {
+          console.debug(serial);
+          console.debug(is1904);
+        }
+
+        if (typeof serial !== 'number' || isNaN(serial)) {
+          throw new Error("Invalid input: serial must be a number.");
+        }
+
+        // Excel's base date offset
+        const excelEpoch = is1904 ? new Date(Date.UTC(1904, 0, 1)) : new Date(Date.UTC(1899, 11, 31));
+
+        // Adjust for Excel's leap year bug (only for 1900 system and serial >= 60)
+        let days = serial;
+        if (!is1904 && serial >= 60) {
+          if (switchDebug) console.debug('lets decrement days by 1.');
+          days -= 1;
+        }
+        if (switchDebug) console.debug(days);
+
+        // Convert days to milliseconds and add to base date
+        // 1,000 msec x 60 sec x 60 min x 24 hours = 86400000
+        const date = new Date(excelEpoch.getTime() + days * 86400000);
+
+        // Format as YYYY-MM-DD
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+
+        console.debug(`${ Temporal.PlainDate.from(`${year}-${month}-${day}`) }`)
+
+        return Temporal.PlainDate.from(`${year}-${month}-${day}`);
+      }
+
+      /**
+       * Convert Temporal.PlainDate to Excel serial
+       * @param {Temporal.PlainDate} plainDate - a Temporal.PlainDate value
+       * @param {boolean} [is1904=false] - Set true if using 1904 date system
+       * @returns {number} - an Excel serial date number
+       */
+      function convertTemporalPlainDateToExcelSerial(plainDate, is1904 = false) {
+        if (!(plainDate instanceof Temporal.PlainDate)) {
+          throw new TypeError("Expected a Temporal.PlainDate instance");
+        }
+
+        // Excel's base day 1 is 1900-01-01, but it incorrectly includes 1900-02-29
+        const excelEpoch = is1904 ? Temporal.PlainDate.from("1904-12-31") : Temporal.PlainDate.from("1899-12-31");
+
+        // Calculate days difference
+        let days = plainDate.since(excelEpoch).total({ unit: "days" });
+
+        // Adjust for Excel's leap year bug: add 1 for dates >= 1900-03-01
+        const leapBugDate = Temporal.PlainDate.from("1900-03-01");
+        if (!is1904 && Temporal.PlainDate.compare(plainDate, leapBugDate) == 1) {
+          days += 1;
+        }
+
+        return days;
+      }
+
+      return { add, subtract, capitalize, isEven, reverseString, convertExcelSerialToTemporalPlainDate, convertTemporalPlainDateToExcelSerial };
     })();
   </script>
 
@@ -86,7 +155,8 @@
     mocha.setup('bdd');
     mocha.checkLeaks();
     const { expect } = chai;
-    const { add, subtract, capitalize, isEven, reverseString } = Utils;
+    // const { Temporal } = temporal;
+    const { add, subtract, capitalize, isEven, reverseString, convertExcelSerialToTemporalPlainDate, convertTemporalPlainDateToExcelSerial } = Utils;
 
     describe('add()', function () {
       it('should return the sum of two numbers', function () {
@@ -148,6 +218,24 @@
       });
       it('should handle single character', function () {
         expect(reverseString('x')).to.equal('x');
+      });
+    });
+
+    describe('convertExcelSerialToTemopralPlainDate()', function () {
+      it('should be an Excel serial', function () {
+        expect(convertExcelSerialToTemporalPlainDate(46256)).to.equal(Temporal.PlainDate.from("2026-08-22"));
+      });
+      it('should be an Excel serial, trial 2', function () {
+        expect(convertExcelSerialToTemporalPlainDate(46257)).to.equal(Temporal.PlainDate.from("2026-08-23"));
+      });
+    });
+
+    describe('convertTemporalPlainDateToExcelSerial()', function () {
+      it('should be a Temporal.PlainDate instance.', function () {
+        expect(convertTemporalPlainDateToExcelSerial(Temporal.PlainDate.from("2026-08-22"))).to.equal(46256);
+      });
+      it('should be a Temporal.PlainDate instance, trial 2', function () {
+        expect(convertTemporalPlainDateToExcelSerial(Temporal.PlainDate.from("2026-08-23"))).to.equal(46257);
       });
     });
 
