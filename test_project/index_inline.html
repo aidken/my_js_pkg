@@ -23,7 +23,7 @@
   <!-- Utility functions (inlined from utils.js for file:// compatibility) -->
   <script>
     // @ts-check
-
+    /* global temporal */
     const { Temporal } = temporal;
     const switchDebug = true;
 
@@ -152,6 +152,7 @@
 
   <!-- Mocha setup & tests -->
   <script>
+    /* global mocha chai */
     mocha.setup('bdd');
     mocha.checkLeaks();
     const { expect } = chai;

@@ -1,0 +1,7 @@
+{
+  "globals": {
+    "temporal": "readonly",
+    "mocha"   : "readonly",
+    "chai"    : "readonly"
+  }
+}

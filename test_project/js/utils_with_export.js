@@ -2,10 +2,13 @@
 /**
  * Utility functions module (ES Module)
  *
- * NOTE: This file serves as the canonical source module.
+ * This file serves as the canonical source module.
  * For browser testing without a server, the functions are
  * inlined in index.html. When you have a server or bundler,
  * you can import this file directly.
+ *
+ * in short this won't work due to CORS. you cannot use export
+ * without an http server.
  */
 
 export function add(a, b) {
@@ -28,4 +31,3 @@ export function isEven(n) {
 export function reverseString(str) {
   return str.split('').reverse().join('');
 }
-

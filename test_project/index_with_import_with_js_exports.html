@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Utility Functions - Mocha Tests</title>
+  <title>Utility Functions - Mocha Tests ... WONT WORK due to CORS</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mocha@10/mocha.css">
 </head>
 <body>
@@ -13,14 +13,43 @@
   <!-- Mocha + Chai from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/mocha@10/mocha.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chai@4/chai.js"></script>
-  <script src="./js/utils.js"></script>
+  <script type="module" src="./js/utils_with_export.js"></script>
+
+  <!-- Utility functions (inlined from utils.js for file:// compatibility)
+  <script>
+    // --- utils.js (inlined) ---
+    const Utils = (() => {
+      function add(a, b) {
+        return a + b;
+      }
+
+      function subtract(a, b) {
+        return a - b;
+      }
+
+      function capitalize(str) {
+        if (typeof str !== 'string' || str.length === 0) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+
+      function isEven(n) {
+        return n % 2 === 0;
+      }
+
+      function reverseString(str) {
+        return str.split('').reverse().join('');
+      }
+
+      return { add, subtract, capitalize, isEven, reverseString };
+    })();
+  </script> -->
 
   <!-- Mocha setup & tests -->
   <script>
     mocha.setup('bdd');
     mocha.checkLeaks();
     const { expect } = chai;
-    const { add, subtract, capitalize, isEven, reverseString, add_2 } = Utils;
+    // const { add, subtract, capitalize, isEven, reverseString, add_2 } = Utils;
 
     describe('add()', function () {
       it('should return the sum of two numbers', function () {
